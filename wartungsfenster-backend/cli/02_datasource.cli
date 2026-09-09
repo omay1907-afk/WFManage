@@ -10,13 +10,40 @@
 #
 # Vorher bitte Host, Port, Datenbankname, Benutzer und Passwort unten
 # an Ihre MySQL-Instanz anpassen.
+#
+# Diese Version ist bewusst IDEMPOTENT UND SELBSTHEILEND, weil in
+# manchen Deployment-Pipelines (z. B. wenn die Server-Konfiguration bei
+# jedem Rollout aus einem Template neu erzeugt wird) frühere
+# Laufzeit-Änderungen nicht zuverlässig erhalten bleiben:
+#   - Der Treiber wird nur angelegt, wenn er noch nicht existiert
+#     (unabhängig davon, ob 01_mysql_module.cli vorher erfolgreich war).
+#   - Eine eventuell schon vorhandene, aber kaputte/unvollständige
+#     Datenquelle (z. B. aus einem vorherigen fehlgeschlagenen Boot)
+#     wird zuerst entfernt und danach sauber neu angelegt, statt mit
+#     "already exists" zu scheitern.
+#
+# HINWEIS: Bewusst OHNE abschließendes ":reload" - falls dieses Skript
+# als Teil einer gebündelten Ausführung mehrerer CLI-Dateien in EINER
+# Sitzung läuft, würde ein Reload mittendrin die Management-
+# Schnittstelle kurz durchstarten und die danach in derselben Sitzung
+# folgenden CLI-Dateien mit "WFLYCTL0379: System boot is in process"
+# fehlschlagen lassen. Der Reload sollte zentral von der Deployment-
+# Pipeline nach ALLEN CLI-Dateien ausgelöst werden. Falls Sie dieses
+# Skript manuell und einzeln ausführen, hängen Sie bei Bedarf einfach
+# ":reload" an oder führen es danach separat aus.
 # ------------------------------------------------------------------
 
-/subsystem=datasources/jdbc-driver=mysql:add(\
-    driver-name=mysql, \
-    driver-module-name=com.mysql, \
-    driver-class-name=com.mysql.cj.jdbc.Driver, \
-    driver-xa-datasource-class-name=com.mysql.cj.jdbc.MysqlXADataSource)
+if (outcome != success) of /subsystem=datasources/jdbc-driver=mysql:read-resource
+    /subsystem=datasources/jdbc-driver=mysql:add(\
+        driver-name=mysql, \
+        driver-module-name=com.mysql, \
+        driver-class-name=com.mysql.cj.jdbc.Driver, \
+        driver-xa-datasource-class-name=com.mysql.cj.jdbc.MysqlXADataSource)
+end-if
+
+if (outcome == success) of /subsystem=datasources/data-source=WartungsfensterDS:read-resource
+    /subsystem=datasources/data-source=WartungsfensterDS:remove
+end-if
 
 data-source add \
     --name=WartungsfensterDS \
@@ -29,5 +56,3 @@ data-source add \
     --max-pool-size=20 \
     --check-valid-connection-sql="SELECT 1" \
     --enabled=true
-
-:reload
