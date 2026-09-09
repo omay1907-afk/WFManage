@@ -12,6 +12,12 @@
 #   EAP_HOME/bin/jboss-cli.sh --connect --file=01_mysql_module.cli
 #
 # Den Pfad zur JAR unten bei --resources anpassen.
+#
+# HINWEIS: "jakarta.api" wurde als Abhängigkeit entfernt - dieses
+# Modul existiert unter diesem Namen nicht in WildFly/EAP 8.1 und
+# führte zu "Module ... is missing: [jakarta.api]" beim Laden des
+# Treibers. jakarta.transaction.api (für XA-Unterstützung) reicht aus
+# und wurde bereits erfolgreich aufgelöst.
 # ------------------------------------------------------------------
 
-module add --name=com.mysql --resources=/modules/mysql-connector-j-9.7.0.jar --dependencies=jakarta.transaction.api,jakarta.api
+module add --name=com.mysql --resources=/pfad/zu/mysql-connector-j-8.4.0.jar --dependencies=jakarta.transaction.api
