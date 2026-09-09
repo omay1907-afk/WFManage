@@ -67,6 +67,16 @@ public class WartungsfensterResource {
         return Response.status(Response.Status.CREATED).entity(toDto(wf)).build();
     }
 
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    public Response loeschen(@PathParam("id") Long id) {
+        Wartungsfenster wf = em.find(Wartungsfenster.class, id);
+        if (wf == null) return Response.status(Response.Status.NOT_FOUND).build();
+        em.remove(wf); // bugfix_zuordnung-Einträge dieses Fensters werden per CASCADE mit entfernt
+        return Response.noContent().build();
+    }
+
     private WartungsfensterDto toDto(Wartungsfenster wf) {
         WartungsfensterDto dto = new WartungsfensterDto();
         dto.id = wf.getId();

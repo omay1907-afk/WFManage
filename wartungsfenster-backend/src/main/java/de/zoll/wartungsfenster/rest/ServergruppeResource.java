@@ -157,6 +157,30 @@ public class ServergruppeResource {
         return toDto(sg);
     }
 
+    @DELETE
+    @Path("/{id}")
+    @Transactional
+    public Response loeschen(@PathParam("id") Long id) {
+        Servergruppe sg = em.find(Servergruppe.class, id);
+        if (sg == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        Instanz instanz = sg.getInstanz();
+        em.remove(sg);
+        em.flush();
+
+        // Wenn das die letzte Platzierung dieser Instanz war, auch die Instanz
+        // (und damit über CASCADE ihre Bugfix-Zuordnungen) mit entfernen.
+        long verbleibend = em.createQuery("SELECT COUNT(s) FROM Servergruppe s WHERE s.instanz = :i", Long.class)
+                .setParameter("i", instanz)
+                .getSingleResult();
+        if (verbleibend == 0) {
+            Instanz managed = em.find(Instanz.class, instanz.getId());
+            if (managed != null) em.remove(managed);
+        }
+
+        return Response.noContent().build();
+    }
+
     private ServergruppeDto toDto(Servergruppe sg) {
         ServergruppeDto dto = new ServergruppeDto();
         dto.id = sg.getId();
