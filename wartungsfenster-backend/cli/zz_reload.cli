@@ -1,0 +1,25 @@
+# ------------------------------------------------------------------
+# zz_reload.cli
+#
+# Löst den nach 02_datasource.cli ausstehenden Reload aus - bewusst
+# als eigene, alphabetisch zuletzt einsortierte Datei (Präfix "zz_"),
+# damit sie in einer gebündelten/aggregierten Ausführung mehrerer
+# CLI-Dateien garantiert NACH 00_base_configuration.cli,
+# 01_mysql_module.cli, 02_datasource.cli UND vip_cbt_dev.cli läuft.
+#
+# Warum das nötig ist: Ohne einen Reload nach dem Anlegen von
+# Treiber/Datenquelle bleibt die Datenquelle zwar als Konfiguration
+# bestehen ("enabled" => true bei read-resource), aber der eigentliche
+# Laufzeit-Dienst dahinter wird nie gestartet - die anschließend
+# deployte WAR trifft dann auf eine Datenquelle, die es "auf dem
+# Papier" gibt, aber nicht wirklich läuft.
+#
+# Würde der Reload dagegen z. B. direkt am Ende von 02_datasource.cli
+# stehen, würde er mitten in der gebündelten Sitzung die Management-
+# Schnittstelle kurz durchstarten und die danach folgende
+# vip_cbt_dev.cli mit "WFLYCTL0379: System boot is in process" zum
+# Scheitern bringen. Als letzte Datei in der alphabetischen Reihenfolge
+# betrifft der Reload daher niemanden mehr, der nach ihm laufen müsste.
+# ------------------------------------------------------------------
+
+:reload
