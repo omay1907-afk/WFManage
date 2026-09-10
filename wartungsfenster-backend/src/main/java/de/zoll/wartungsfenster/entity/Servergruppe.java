@@ -43,7 +43,6 @@ public class Servergruppe {
     @Column(name = "soa_endpunkte")
     private String soaEndpunkte = "";
 
-    @Column(name = "jdk_version", length = 30)
     @Column(name = "jdk_version_alt", length = 30)
     private String jdkVersionAlt = "";
 
