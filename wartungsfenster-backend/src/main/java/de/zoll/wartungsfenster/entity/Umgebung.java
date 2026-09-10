@@ -1,5 +1,6 @@
 package de.zoll.wartungsfenster.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -9,12 +10,16 @@ import jakarta.persistence.Table;
 public class Umgebung {
 
     @Id
+    @Column(length = 20)
     private String code;
 
+    @Column(length = 120)
     private String bezeichnung;
 
+    @Column(length = 20)
     private String gruppe;
 
+    @Column(length = 7)
     private String farbe;
 
     private Integer sortierung;

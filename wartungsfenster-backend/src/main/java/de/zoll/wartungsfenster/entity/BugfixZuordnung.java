@@ -22,17 +22,20 @@ public class BugfixZuordnung {
     @JoinColumn(name = "wartungsfenster_id", nullable = false)
     private Wartungsfenster wartungsfenster;
 
-    @Column(name = "bugfix_nr")
+    @Column(name = "bugfix_nr", length = 30)
     private String bugfixNr = "";
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 10)
     private Properties properties = Properties.nein;
 
     @Column(name = "nexus_link")
     private String nexusLink = "";
 
+    @Column(length = 500)
     private String bemerkung = "";
 
+    @Column(columnDefinition = "TINYINT(1)")
     private boolean eingespielt = false;
 
     @Convert(converter = ColorMapConverter.class)

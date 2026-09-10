@@ -28,13 +28,13 @@ public class Servergruppe {
     @JoinColumn(name = "domaene_id")
     private Domaene domaene;
 
-    @Column(name = "jbossadmin")
+    @Column(name = "jbossadmin", length = 120)
     private String jbossAdmin = "";
 
-    @Column(name = "jira_kennzeichen")
+    @Column(name = "jira_kennzeichen", length = 60)
     private String jiraKennzeichen = "";
 
-    @Column(name = "ansprechpartner")
+    @Column(name = "ansprechpartner", length = 120)
     private String ansprechpartner = "";
 
     @Column(name = "aufrufadresse")

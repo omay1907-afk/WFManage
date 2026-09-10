@@ -12,6 +12,7 @@ public class Wartungsfenster {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 4)
     private String nummer;
 
     private LocalDate datum;
@@ -20,7 +21,7 @@ public class Wartungsfenster {
     @Column(insertable = false, updatable = false)
     private Integer kw;
 
-    @Column(name = "atlas_release")
+    @Column(name = "atlas_release", length = 40)
     private String atlasRelease;
 
     public Long getId() { return id; }
