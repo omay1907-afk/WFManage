@@ -26,6 +26,7 @@ public class ServergruppeResource {
     EntityManager em;
 
     @GET
+    @Transactional
     public List<ServergruppeDto> alle() {
         return em.createQuery("SELECT s FROM Servergruppe s ORDER BY s.umgebung.sortierung, s.instanz.name", Servergruppe.class)
                 .getResultList()
