@@ -49,7 +49,7 @@ data-source add \
     --name=WartungsfensterDS \
     --jndi-name=java:/WartungsfensterDS \
     --driver-name=mysql \
-    --connection-url=jdbc:mysql://vle94498.entw.atlas.zoll.itzbund.net:3306/wartungsfenster?useSSL=required &serverTimezone=UTC&allowPublicKeyRetrieval=true \
+    --connection-url=jdbc:mysql://vle94498.entw.atlas.zoll.itzbund.net:3306/wartungsfenster?sslMode=REQUIRED &serverTimezone=UTC&allowPublicKeyRetrieval=true \
     --user-name=atlas_tir_jboss \
     --password=T90&8.BNDsyJ<.pAF*aw \
     --min-pool-size=5 \
