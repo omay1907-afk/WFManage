@@ -112,13 +112,16 @@ public class ServergruppeResource {
     @Path("/basisaenderung")
     @Transactional
     public List<ServergruppeDto> basisaenderungFuerAlle(Map<String, String> body) {
-        String jdk = body.getOrDefault("jdkVersion", "");
+        String jdkAlt = body.getOrDefault("jdkVersionAlt", "");
+        String jdkNeu = body.getOrDefault("jdkVersionNeu", "");
         String eap = body.getOrDefault("eapVersion", "");
         String ojdbc = body.getOrDefault("ojdbcVersion", "");
 
         List<Servergruppe> alle = em.createQuery("SELECT s FROM Servergruppe s", Servergruppe.class).getResultList();
         for (Servergruppe sg : alle) {
-            sg.setJdkVersion(jdk);
+            sg.setJdkVersionAlt(jdkAlt);
+            sg.setJdkVersionNeu(jdkNeu);
+            sg.setJdkAufNeuerVersion(false);
             sg.setEapVersion(eap);
             sg.setOjdbcVersion(ojdbc);
             sg.setBasisaenderungEingespielt(false);
@@ -139,7 +142,9 @@ public class ServergruppeResource {
         if (body.containsKey("ansprechpartner")) sg.setAnsprechpartner(str(body.get("ansprechpartner")));
         if (body.containsKey("aufrufadresse")) sg.setAufrufadresse(str(body.get("aufrufadresse")));
         if (body.containsKey("soaEndpunkte")) sg.setSoaEndpunkte(str(body.get("soaEndpunkte")));
-        if (body.containsKey("jdkVersion")) sg.setJdkVersion(str(body.get("jdkVersion")));
+        if (body.containsKey("jdkVersionAlt")) sg.setJdkVersionAlt(str(body.get("jdkVersionAlt")));
+        if (body.containsKey("jdkVersionNeu")) sg.setJdkVersionNeu(str(body.get("jdkVersionNeu")));
+        if (body.containsKey("jdkAufNeuerVersion")) sg.setJdkAufNeuerVersion(Boolean.TRUE.equals(body.get("jdkAufNeuerVersion")));
         if (body.containsKey("eapVersion")) sg.setEapVersion(str(body.get("eapVersion")));
         if (body.containsKey("ojdbcVersion")) sg.setOjdbcVersion(str(body.get("ojdbcVersion")));
         if (body.containsKey("basisaenderungEingespielt")) sg.setBasisaenderungEingespielt(Boolean.TRUE.equals(body.get("basisaenderungEingespielt")));
@@ -220,7 +225,9 @@ public class ServergruppeResource {
         dto.ansprechpartner = sg.getAnsprechpartner();
         dto.aufrufadresse = sg.getAufrufadresse();
         dto.soaEndpunkte = sg.getSoaEndpunkte();
-        dto.jdkVersion = sg.getJdkVersion();
+        dto.jdkVersionAlt = sg.getJdkVersionAlt();
+        dto.jdkVersionNeu = sg.getJdkVersionNeu();
+        dto.jdkAufNeuerVersion = sg.isJdkAufNeuerVersion();
         dto.eapVersion = sg.getEapVersion();
         dto.ojdbcVersion = sg.getOjdbcVersion();
         dto.basisaenderungEingespielt = sg.isBasisaenderungEingespielt();

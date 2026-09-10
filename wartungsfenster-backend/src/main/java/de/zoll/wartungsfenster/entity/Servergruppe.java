@@ -44,7 +44,14 @@ public class Servergruppe {
     private String soaEndpunkte = "";
 
     @Column(name = "jdk_version", length = 30)
-    private String jdkVersion = "";
+    @Column(name = "jdk_version_alt", length = 30)
+    private String jdkVersionAlt = "";
+
+    @Column(name = "jdk_version_neu", length = 30)
+    private String jdkVersionNeu = "";
+
+    @Column(name = "jdk_auf_neuer_version", columnDefinition = "TINYINT(1)")
+    private boolean jdkAufNeuerVersion = false;
 
     @Column(name = "eap_version", length = 30)
     private String eapVersion = "";
@@ -89,8 +96,14 @@ public class Servergruppe {
     public String getSoaEndpunkte() { return soaEndpunkte; }
     public void setSoaEndpunkte(String soaEndpunkte) { this.soaEndpunkte = soaEndpunkte; }
 
-    public String getJdkVersion() { return jdkVersion; }
-    public void setJdkVersion(String jdkVersion) { this.jdkVersion = jdkVersion; }
+    public String getJdkVersionAlt() { return jdkVersionAlt; }
+    public void setJdkVersionAlt(String jdkVersionAlt) { this.jdkVersionAlt = jdkVersionAlt; }
+
+    public String getJdkVersionNeu() { return jdkVersionNeu; }
+    public void setJdkVersionNeu(String jdkVersionNeu) { this.jdkVersionNeu = jdkVersionNeu; }
+
+    public boolean isJdkAufNeuerVersion() { return jdkAufNeuerVersion; }
+    public void setJdkAufNeuerVersion(boolean jdkAufNeuerVersion) { this.jdkAufNeuerVersion = jdkAufNeuerVersion; }
 
     public String getEapVersion() { return eapVersion; }
     public void setEapVersion(String eapVersion) { this.eapVersion = eapVersion; }
