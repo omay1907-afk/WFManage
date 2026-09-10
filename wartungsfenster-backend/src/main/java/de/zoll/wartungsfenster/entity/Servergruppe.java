@@ -43,6 +43,18 @@ public class Servergruppe {
     @Column(name = "soa_endpunkte")
     private String soaEndpunkte = "";
 
+    @Column(name = "jdk_version", length = 30)
+    private String jdkVersion = "";
+
+    @Column(name = "eap_version", length = 30)
+    private String eapVersion = "";
+
+    @Column(name = "ojdbc_version", length = 30)
+    private String ojdbcVersion = "";
+
+    @Column(name = "basisaenderung_eingespielt", columnDefinition = "TINYINT(1)")
+    private boolean basisaenderungEingespielt = false;
+
     @Convert(converter = ColorMapConverter.class)
     @Column(name = "farben", columnDefinition = "json")
     private Map<String, String> farben = new LinkedHashMap<>();
@@ -76,6 +88,18 @@ public class Servergruppe {
 
     public String getSoaEndpunkte() { return soaEndpunkte; }
     public void setSoaEndpunkte(String soaEndpunkte) { this.soaEndpunkte = soaEndpunkte; }
+
+    public String getJdkVersion() { return jdkVersion; }
+    public void setJdkVersion(String jdkVersion) { this.jdkVersion = jdkVersion; }
+
+    public String getEapVersion() { return eapVersion; }
+    public void setEapVersion(String eapVersion) { this.eapVersion = eapVersion; }
+
+    public String getOjdbcVersion() { return ojdbcVersion; }
+    public void setOjdbcVersion(String ojdbcVersion) { this.ojdbcVersion = ojdbcVersion; }
+
+    public boolean isBasisaenderungEingespielt() { return basisaenderungEingespielt; }
+    public void setBasisaenderungEingespielt(boolean basisaenderungEingespielt) { this.basisaenderungEingespielt = basisaenderungEingespielt; }
 
     public Map<String, String> getFarben() { return farben; }
     public void setFarben(Map<String, String> farben) { this.farben = farben; }

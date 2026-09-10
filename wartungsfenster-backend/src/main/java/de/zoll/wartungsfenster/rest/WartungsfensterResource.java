@@ -41,15 +41,29 @@ public class WartungsfensterResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("fehler", "Datum und ATLAS Release sind Pflichtfelder")).build();
         }
 
-        long anzahl = em.createQuery("SELECT COUNT(w) FROM Wartungsfenster w", Long.class).getSingleResult();
-        String nummer = String.format("%02d", anzahl + 1);
+        // Nächste Nummer anhand des höchsten bisher vergebenen Werts berechnen (nicht per
+        // Zeilenanzahl) - robust gegenüber gelöschten oder manuell geänderten Wartungsfenstern.
+        List<String> vorhandeneNummern = em.createQuery("SELECT w.nummer FROM Wartungsfenster w", String.class).getResultList();
+        int hoechste = 0;
+        for (String n : vorhandeneNummern) {
+            try {
+                hoechste = Math.max(hoechste, Integer.parseInt(n.trim()));
+            } catch (NumberFormatException ignored) {
+                // nicht-numerische Nummern werden bei der automatischen Berechnung ignoriert
+            }
+        }
+        String nummer = (req.nummer != null && !req.nummer.isBlank()) ? req.nummer.trim() : String.format("%02d", hoechste + 1);
 
         Wartungsfenster wf = new Wartungsfenster();
         wf.setNummer(nummer);
         wf.setDatum(LocalDate.parse(req.datum));
         wf.setAtlasRelease(req.atlasRelease.trim());
-        em.persist(wf);
-        em.flush(); // kw wird von MySQL generiert - nach flush() erneut lesen
+        try {
+            em.persist(wf);
+            em.flush(); // kw wird von MySQL generiert - nach flush() erneut lesen
+        } catch (jakarta.persistence.PersistenceException e) {
+            return Response.status(Response.Status.CONFLICT).entity(Map.of("fehler", "Wartungsfenster-Nummer \"" + nummer + "\" ist bereits vergeben")).build();
+        }
 
         // Ein neues Wartungsfenster startet bewusst OHNE übernommene Bugfixe/Markierungen:
         // für jede bestehende Instanz wird ein expliziter Leer-Eintrag angelegt, damit die

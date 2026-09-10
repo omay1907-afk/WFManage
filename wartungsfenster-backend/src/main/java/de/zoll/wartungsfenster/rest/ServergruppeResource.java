@@ -68,12 +68,13 @@ public class ServergruppeResource {
                     .build();
         }
 
-        Domaene domaene = req.domainId != null ? em.find(Domaene.class, req.domainId) : null;
-
         List<ServergruppeDto> erstellt = new ArrayList<>();
         for (String code : req.umgebungCodes) {
             Umgebung umgebung = em.find(Umgebung.class, code);
             if (umgebung == null) continue;
+
+            Long domainId = req.domainIdByUmgebung != null ? req.domainIdByUmgebung.get(code) : null;
+            Domaene domaene = domainId != null ? em.find(Domaene.class, domainId) : null;
 
             Servergruppe sg = new Servergruppe();
             sg.setInstanz(instanz);
@@ -103,6 +104,29 @@ public class ServergruppeResource {
         return Response.status(Response.Status.CREATED).entity(erstellt).build();
     }
 
+    // Wendet eine Basisänderung (JDK/EAP/OJDBC-Version) auf ALLE Servergruppen an - über
+    // alle Umgebungen hinweg. Setzt "eingespielt" dabei bewusst zurück auf false, da eine
+    // neue Basisänderung noch nicht ausgerollt wurde. Muss vor "/{id}" stehen, damit der
+    // literale Pfad "/basisaenderung" nicht versehentlich als {id}="basisaenderung" gematcht wird.
+    @PUT
+    @Path("/basisaenderung")
+    @Transactional
+    public List<ServergruppeDto> basisaenderungFuerAlle(Map<String, String> body) {
+        String jdk = body.getOrDefault("jdkVersion", "");
+        String eap = body.getOrDefault("eapVersion", "");
+        String ojdbc = body.getOrDefault("ojdbcVersion", "");
+
+        List<Servergruppe> alle = em.createQuery("SELECT s FROM Servergruppe s", Servergruppe.class).getResultList();
+        for (Servergruppe sg : alle) {
+            sg.setJdkVersion(jdk);
+            sg.setEapVersion(eap);
+            sg.setOjdbcVersion(ojdbc);
+            sg.setBasisaenderungEingespielt(false);
+        }
+        em.flush();
+        return alle.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @PUT
     @Path("/{id}")
     @Transactional
@@ -115,10 +139,13 @@ public class ServergruppeResource {
         if (body.containsKey("ansprechpartner")) sg.setAnsprechpartner(str(body.get("ansprechpartner")));
         if (body.containsKey("aufrufadresse")) sg.setAufrufadresse(str(body.get("aufrufadresse")));
         if (body.containsKey("soaEndpunkte")) sg.setSoaEndpunkte(str(body.get("soaEndpunkte")));
+        if (body.containsKey("jdkVersion")) sg.setJdkVersion(str(body.get("jdkVersion")));
+        if (body.containsKey("eapVersion")) sg.setEapVersion(str(body.get("eapVersion")));
+        if (body.containsKey("ojdbcVersion")) sg.setOjdbcVersion(str(body.get("ojdbcVersion")));
+        if (body.containsKey("basisaenderungEingespielt")) sg.setBasisaenderungEingespielt(Boolean.TRUE.equals(body.get("basisaenderungEingespielt")));
 
         if (body.containsKey("domainId")) {
-            Object v = body.get("domainId");
-            sg.setDomaene(v == null ? null : em.find(Domaene.class, ((Number) v).longValue()));
+            sg.setDomaene(toLongOrNull(body.get("domainId")) == null ? null : em.find(Domaene.class, toLongOrNull(body.get("domainId"))));
         }
 
         if (body.containsKey("name")) {
@@ -193,6 +220,10 @@ public class ServergruppeResource {
         dto.ansprechpartner = sg.getAnsprechpartner();
         dto.aufrufadresse = sg.getAufrufadresse();
         dto.soaEndpunkte = sg.getSoaEndpunkte();
+        dto.jdkVersion = sg.getJdkVersion();
+        dto.eapVersion = sg.getEapVersion();
+        dto.ojdbcVersion = sg.getOjdbcVersion();
+        dto.basisaenderungEingespielt = sg.isBasisaenderungEingespielt();
         dto.artefaktVorlagen = sg.getArtefaktVorlagen().stream().map(ServergruppeArtefaktVorlage::getVorlage).collect(Collectors.toList());
         dto.colors = sg.getFarben();
         return dto;
@@ -200,4 +231,13 @@ public class ServergruppeResource {
 
     private static String nvl(String s) { return s == null ? "" : s; }
     private static String str(Object o) { return o == null ? null : String.valueOf(o); }
+
+    // Robust gegenüber JSON-B, das je nach Situation eine Zahl oder eine Zeichenkette
+    // liefern kann (z. B. wenn das Frontend versehentlich einen String-Wert sendet).
+    private static Long toLongOrNull(Object o) {
+        if (o == null) return null;
+        if (o instanceof Number n) return n.longValue();
+        String s = String.valueOf(o).trim();
+        return s.isEmpty() ? null : Long.parseLong(s);
+    }
 }
