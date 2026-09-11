@@ -2,8 +2,6 @@ package de.zoll.wartungsfenster.rest;
 
 import de.zoll.wartungsfenster.dto.NeuesWartungsfensterRequest;
 import de.zoll.wartungsfenster.dto.WartungsfensterDto;
-import de.zoll.wartungsfenster.entity.BugfixZuordnung;
-import de.zoll.wartungsfenster.entity.Instanz;
 import de.zoll.wartungsfenster.entity.Wartungsfenster;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -65,17 +63,10 @@ public class WartungsfensterResource {
             return Response.status(Response.Status.CONFLICT).entity(Map.of("fehler", "Wartungsfenster-Nummer \"" + nummer + "\" ist bereits vergeben")).build();
         }
 
-        // Ein neues Wartungsfenster startet bewusst OHNE übernommene Bugfixe/Markierungen:
-        // für jede bestehende Instanz wird ein expliziter Leer-Eintrag angelegt, damit die
-        // Fortschreibungslogik (v_bugfix_effektiv) hier nicht auf ältere Fenster zurückgreift.
-        List<Instanz> instanzen = em.createQuery("SELECT i FROM Instanz i", Instanz.class).getResultList();
-        for (Instanz i : instanzen) {
-            BugfixZuordnung leer = new BugfixZuordnung();
-            leer.setInstanz(i);
-            leer.setWartungsfenster(wf);
-            em.persist(leer);
-        }
-
+        // Ein neues Wartungsfenster ist bewusst komplett eigenständig: es startet ohne
+        // jegliche Bugfixe (kein Fortschreiben mehr aus früheren Fenstern), daher ist hier
+        // keine weitere Initialisierung nötig - GET /bugfixe liefert für dieses Fenster
+        // von selbst eine leere Liste, bis explizit etwas angelegt wird.
         em.flush();
         em.refresh(wf);
         return Response.status(Response.Status.CREATED).entity(toDto(wf)).build();
@@ -87,7 +78,7 @@ public class WartungsfensterResource {
     public Response loeschen(@PathParam("id") Long id) {
         Wartungsfenster wf = em.find(Wartungsfenster.class, id);
         if (wf == null) return Response.status(Response.Status.NOT_FOUND).build();
-        em.remove(wf); // bugfix_zuordnung-Einträge dieses Fensters werden per CASCADE mit entfernt
+        em.remove(wf); // Bugfixe dieses Fensters werden per CASCADE mit entfernt
         return Response.noContent().build();
     }
 

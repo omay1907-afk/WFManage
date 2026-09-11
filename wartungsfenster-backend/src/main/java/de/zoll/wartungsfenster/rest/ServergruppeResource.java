@@ -3,6 +3,7 @@ package de.zoll.wartungsfenster.rest;
 import de.zoll.wartungsfenster.dto.NeueServergruppeRequest;
 import de.zoll.wartungsfenster.dto.ServergruppeDto;
 import de.zoll.wartungsfenster.entity.*;
+import de.zoll.wartungsfenster.util.WartungsfensterUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
@@ -69,6 +70,17 @@ public class ServergruppeResource {
                     .build();
         }
 
+        // Aktuell geltende Basisänderung ermitteln (zuletzt aktualisierter Eintrag über alle
+        // Servergruppen hinweg) und für die neu angelegten Instanzen automatisch übernehmen -
+        // nur der "läuft schon auf neuerer Version"-Umschalter kommt vom Formular.
+        Basisaenderung letzteBasisaenderung = em.createQuery(
+                "SELECT b FROM Basisaenderung b ORDER BY b.id DESC", Basisaenderung.class)
+                .setMaxResults(1)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+        Wartungsfenster aktuellesFenster = WartungsfensterUtil.aktuelles(em);
+
         List<ServergruppeDto> erstellt = new ArrayList<>();
         for (String code : req.umgebungCodes) {
             Umgebung umgebung = em.find(Umgebung.class, code);
@@ -88,6 +100,20 @@ public class ServergruppeResource {
             sg.setSoaEndpunkte(nvl(req.soaEndpunkte));
             em.persist(sg);
 
+            if (aktuellesFenster != null) {
+                Basisaenderung b = new Basisaenderung();
+                b.setServergruppe(sg);
+                b.setWartungsfenster(aktuellesFenster);
+                if (letzteBasisaenderung != null) {
+                    b.setJdkVersionAlt(letzteBasisaenderung.getJdkVersionAlt());
+                    b.setJdkVersionNeu(letzteBasisaenderung.getJdkVersionNeu());
+                    b.setEapVersion(letzteBasisaenderung.getEapVersion());
+                    b.setOjdbcVersion(letzteBasisaenderung.getOjdbcVersion());
+                }
+                b.setJdkAufNeuerVersion(req.jdkAufNeuerVersion);
+                em.persist(b);
+            }
+
             if (req.artefaktVorlagen != null) {
                 for (String vorlage : req.artefaktVorlagen) {
                     if (vorlage == null || vorlage.isBlank()) continue;
@@ -105,32 +131,6 @@ public class ServergruppeResource {
         return Response.status(Response.Status.CREATED).entity(erstellt).build();
     }
 
-    // Wendet eine Basisänderung (JDK/EAP/OJDBC-Version) auf ALLE Servergruppen an - über
-    // alle Umgebungen hinweg. Setzt "eingespielt" dabei bewusst zurück auf false, da eine
-    // neue Basisänderung noch nicht ausgerollt wurde. Muss vor "/{id}" stehen, damit der
-    // literale Pfad "/basisaenderung" nicht versehentlich als {id}="basisaenderung" gematcht wird.
-    @PUT
-    @Path("/basisaenderung")
-    @Transactional
-    public List<ServergruppeDto> basisaenderungFuerAlle(Map<String, String> body) {
-        String jdkAlt = body.getOrDefault("jdkVersionAlt", "");
-        String jdkNeu = body.getOrDefault("jdkVersionNeu", "");
-        String eap = body.getOrDefault("eapVersion", "");
-        String ojdbc = body.getOrDefault("ojdbcVersion", "");
-
-        List<Servergruppe> alle = em.createQuery("SELECT s FROM Servergruppe s", Servergruppe.class).getResultList();
-        for (Servergruppe sg : alle) {
-            sg.setJdkVersionAlt(jdkAlt);
-            sg.setJdkVersionNeu(jdkNeu);
-            sg.setJdkAufNeuerVersion(false);
-            sg.setEapVersion(eap);
-            sg.setOjdbcVersion(ojdbc);
-            sg.setBasisaenderungEingespielt(false);
-        }
-        em.flush();
-        return alle.stream().map(this::toDto).collect(Collectors.toList());
-    }
-
     @PUT
     @Path("/{id}")
     @Transactional
@@ -143,12 +143,6 @@ public class ServergruppeResource {
         if (body.containsKey("ansprechpartner")) sg.setAnsprechpartner(str(body.get("ansprechpartner")));
         if (body.containsKey("aufrufadresse")) sg.setAufrufadresse(str(body.get("aufrufadresse")));
         if (body.containsKey("soaEndpunkte")) sg.setSoaEndpunkte(str(body.get("soaEndpunkte")));
-        if (body.containsKey("jdkVersionAlt")) sg.setJdkVersionAlt(str(body.get("jdkVersionAlt")));
-        if (body.containsKey("jdkVersionNeu")) sg.setJdkVersionNeu(str(body.get("jdkVersionNeu")));
-        if (body.containsKey("jdkAufNeuerVersion")) sg.setJdkAufNeuerVersion(Boolean.TRUE.equals(body.get("jdkAufNeuerVersion")));
-        if (body.containsKey("eapVersion")) sg.setEapVersion(str(body.get("eapVersion")));
-        if (body.containsKey("ojdbcVersion")) sg.setOjdbcVersion(str(body.get("ojdbcVersion")));
-        if (body.containsKey("basisaenderungEingespielt")) sg.setBasisaenderungEingespielt(Boolean.TRUE.equals(body.get("basisaenderungEingespielt")));
 
         if (body.containsKey("domainId")) {
             sg.setDomaene(toLongOrNull(body.get("domainId")) == null ? null : em.find(Domaene.class, toLongOrNull(body.get("domainId"))));
@@ -226,12 +220,6 @@ public class ServergruppeResource {
         dto.ansprechpartner = sg.getAnsprechpartner();
         dto.aufrufadresse = sg.getAufrufadresse();
         dto.soaEndpunkte = sg.getSoaEndpunkte();
-        dto.jdkVersionAlt = sg.getJdkVersionAlt();
-        dto.jdkVersionNeu = sg.getJdkVersionNeu();
-        dto.jdkAufNeuerVersion = sg.isJdkAufNeuerVersion();
-        dto.eapVersion = sg.getEapVersion();
-        dto.ojdbcVersion = sg.getOjdbcVersion();
-        dto.basisaenderungEingespielt = sg.isBasisaenderungEingespielt();
         dto.artefaktVorlagen = sg.getArtefaktVorlagen().stream().map(ServergruppeArtefaktVorlage::getVorlage).collect(Collectors.toList());
         dto.colors = sg.getFarben();
         return dto;

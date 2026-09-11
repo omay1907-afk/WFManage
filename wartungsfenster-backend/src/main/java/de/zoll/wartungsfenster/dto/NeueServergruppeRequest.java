@@ -13,4 +13,5 @@ public class NeueServergruppeRequest {
     public String aufrufadresse;
     public String soaEndpunkte;
     public List<String> artefaktVorlagen;
+    public boolean jdkAufNeuerVersion; // Basisänderung wird automatisch übernommen; nur dieser Umschalter ist beim Anlegen setzbar
 }

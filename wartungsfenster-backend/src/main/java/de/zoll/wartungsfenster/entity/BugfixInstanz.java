@@ -7,30 +7,24 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Entity
-@Table(name = "bugfix_zuordnung", uniqueConstraints = @UniqueConstraint(columnNames = {"instanz_id", "wartungsfenster_id"}))
-public class BugfixZuordnung {
+@Table(name = "bugfix_instanz", uniqueConstraints = @UniqueConstraint(columnNames = {"bugfix_id", "instanz_id"}))
+public class BugfixInstanz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "instanz_id", nullable = false)
-    private Instanz instanz;
+    @JoinColumn(name = "bugfix_id", nullable = false)
+    private Bugfix bugfix;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "wartungsfenster_id", nullable = false)
-    private Wartungsfenster wartungsfenster;
-
-    @Column(name = "bugfix_nr", length = 30)
-    private String bugfixNr = "";
+    @JoinColumn(name = "instanz_id", nullable = false)
+    private Instanz instanz;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private Properties properties = Properties.nein;
-
-    @Column(name = "nexus_link")
-    private String nexusLink = "";
 
     @Column(length = 500)
     private String bemerkung = "";
@@ -47,20 +41,14 @@ public class BugfixZuordnung {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public Bugfix getBugfix() { return bugfix; }
+    public void setBugfix(Bugfix bugfix) { this.bugfix = bugfix; }
+
     public Instanz getInstanz() { return instanz; }
     public void setInstanz(Instanz instanz) { this.instanz = instanz; }
 
-    public Wartungsfenster getWartungsfenster() { return wartungsfenster; }
-    public void setWartungsfenster(Wartungsfenster wartungsfenster) { this.wartungsfenster = wartungsfenster; }
-
-    public String getBugfixNr() { return bugfixNr; }
-    public void setBugfixNr(String bugfixNr) { this.bugfixNr = bugfixNr; }
-
     public Properties getProperties() { return properties; }
     public void setProperties(Properties properties) { this.properties = properties; }
-
-    public String getNexusLink() { return nexusLink; }
-    public void setNexusLink(String nexusLink) { this.nexusLink = nexusLink; }
 
     public String getBemerkung() { return bemerkung; }
     public void setBemerkung(String bemerkung) { this.bemerkung = bemerkung; }

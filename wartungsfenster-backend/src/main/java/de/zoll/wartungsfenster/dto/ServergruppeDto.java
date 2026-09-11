@@ -14,12 +14,6 @@ public class ServergruppeDto {
     public String ansprechpartner;
     public String aufrufadresse;
     public String soaEndpunkte;
-    public String jdkVersionAlt;
-    public String jdkVersionNeu;
-    public boolean jdkAufNeuerVersion;
-    public String eapVersion;
-    public String ojdbcVersion;
-    public boolean basisaenderungEingespielt;
     public List<String> artefaktVorlagen;
     public Map<String, String> colors;
 }
